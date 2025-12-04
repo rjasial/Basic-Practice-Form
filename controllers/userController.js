@@ -12,16 +12,36 @@ export const showHome = async (req, res) => {
 };
 
 export const createUser = async (req, res) => {
-const { name, email, zipcode, country } = req.body;
+  const { name, email, zipcode, country } = req.body;
 
-  try{
-   await Submission.create({ name, email, zipcode, country });
-    res.redirect("/");
-  }catch(err){
-    console.error("Error saving submission:", err);
-    res.status(500).send("Internal Server Error");
+  try {
+    await Submission.create({ name, email, zipcode, country });
+    return res.redirect('/');
+
+  } catch (err) {
+    console.log('Validation Error:', err);
+
+    // If the error is coming from Mongoose validations
+    let errorMessage = 'Something went wrong';
+
+    if (err.name === 'ValidationError') {
+      // Collect all mongoose validation messages
+      errorMessage = Object.values(err.errors)
+        .map((e) => e.message)
+        .join('<br>');
+    }
+
+    // If duplicate email (unique: true)
+    if (err.code === 11000) {
+      errorMessage = 'Email already exists!';
+    }
+
+    // Render home with error message + keep current user list
+    const users = await Submission.find().sort({ createdAt: -1 });
+    return res.render('home', { users, errorMessage });
   }
 };
+
 
 export const editUser = async (req, res) => {
   try{
