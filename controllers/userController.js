@@ -14,8 +14,33 @@ export const showHome = async (req, res) => {
 export const createUser = async (req, res) => {
   const { name, email, zipcode, country } = req.body;
 
+  let skills = [];
+  if(req.body.skills){{
+    if(Array.isArray(req.body.skills)){
+      skills = req.body.skills;
+    }else{
+      skills = [req.body.skills];
+    }
+  }
+
+  const newsletter = req.body.newsletter === 'on' ? true : false;
+
+  let fileData = null;
+  let fileMimeType = null;
+  let fileName = null;
+  let fileSize = null;
+
+  if(req.file){
+    fileData = req.file.buffer;
+    fileMimeType = req.file.mimetype;
+    fileName = req.file.originalname;
+    fileSize = req.file.size;
+  }
+
+  console.log(req.file);
+
   try {
-    await Submission.create({ name, email, zipcode, country });
+    await Submission.create({ name, email, zipcode, country, fileData, fileMimeType, fileName, fileSize, skills, newsletter });
     return res.redirect('/');
 
   } catch (err) {
@@ -40,6 +65,7 @@ export const createUser = async (req, res) => {
     const users = await Submission.find().sort({ createdAt: -1 });
     return res.render('home', { users, errorMessage });
   }
+}
 };
 
 
